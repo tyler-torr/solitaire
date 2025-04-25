@@ -9,19 +9,8 @@ CARD_STATE = {
   GRABBED = 2
 }
 
--- Colors
-white = {1, 1, 1, 1}
-red = {1, 0, 0, 1}
-black = {0, 0, 0, 1}
-
 function CardClass:new(suit, rank, visible, xPos, yPos)
-  print("Suit: " .. suit)
-  print("Rank: " .. tostring(rank))
-  
-  local imageKey = suit .. " " .. tostring(rank)
-  local imagePath = "cards/" .. imageKey .. ".png"
-  
-  print("Attempting to load image: " .. imagePath)
+  local imagePath = "cards/" .. suit .. " " .. tostring(rank) .. ".png"
   
   local card = {}
   local metadata = {__index = CardClass}
