@@ -4,7 +4,9 @@
 io.stdout:setvbuf("no")
 
 require "card"
+require "deck"
 require "grabber"
+require "pile"
 
 function love.load()
   love.window.setMode(960, 640)
@@ -13,9 +15,9 @@ function love.load()
   grabber = GrabberClass:new()
   cardTable = {}
   
-  table.insert(cardTable, CardClass:new("Clubs", 2, true, 100, 100))
-  
+  table.insert(cardTable, CardClass:new("Clubs", 2, true, 100, 100))  
 end
+
 function love.update()
   grabber:update()
   
@@ -25,6 +27,7 @@ function love.update()
     card:update()
   end
 end
+
 function love.draw()
   for _, card in ipairs(cardTable) do
     card:draw()
