@@ -19,11 +19,18 @@ function DeckClass:new()
     end
   end
   
+  deck:shuffle()
+  
   return deck
 end
 
 function DeckClass:shuffle()
-  -- Uhhhh come back to this later??
+  math.randomseed(os.time())
+  
+  for i = 1, #self.cards do
+    local rand = math.random(1, #self.cards)
+    self.cards[i], self.cards[rand] = self.cards[rand], self.cards[i]
+  end
 end
 
 -- Add a card to a deck

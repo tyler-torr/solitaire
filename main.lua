@@ -13,19 +13,18 @@ function love.load()
   love.window.setMode(960, 640)
   love.graphics.setBackgroundColor(0, 0.7, 0.2, 1)
   
+  local piles = {}
+  local deck = {}
+  
   grabber = GrabberClass:new()
   cardTable = {}
-  pile = PileClass:new(300, 200)
   
-  local card1 = CardClass:new("Hearts", "1", false, 0, 0)
-  local card2 = CardClass:new("Diamonds", "12", false, 0, 0)
-  local card3 = CardClass:new("Clubs", "13", false, 0, 0)
-  
-  pile:addCard(card1)
-  pile:addCard(card2)
-  pile:addCard(card3)
-  
-  table.insert(cardTable, CardClass:new("Clubs", 2, true, 100, 100))  
+  -- Create 7 tableau piles
+  piles = {}
+  for i = 1, 7 do
+    local pile = Pile:new(i * 100, 200)
+    for j = 1, i do
+      local card =  self.deck
 end
 
 function love.update()
