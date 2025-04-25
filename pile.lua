@@ -2,6 +2,7 @@
 PileClass = {}
 
 pileOffset = 10 -- Distance between each card on a pile
+
 -- Create a pile of cards 
 function PileClass:new(xPos, yPos)
   local pile = {}
@@ -57,18 +58,21 @@ function PileClass:revealCard()
   end
 end
 
+function PileClass:clear()
+  self.cards = {}
+end
+
 function PileClass:draw()
   if #self.cards > 0 then
     local topCard = self:peek()
     topCard.position = self.position
     topCard:draw()
     
-    local stackedCard = self:peek()
     for i = 2, #self.cards do
-      stackedCard = self.cards[i]
+      local stackedCard = self.cards[i]
       stackedCard.position = Vector(self.position.x, self.position.y + i * pileOffset)
       if stackedCard.visible then
-        stackedCard.draw()
+        stackedCard:draw()
       end
     end
   end

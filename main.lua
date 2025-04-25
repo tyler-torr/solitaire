@@ -9,6 +9,7 @@ require "grabber"
 require "pile"
 
 function love.load()
+  love.window.setTitle("Super Epic & Awesome Solitaire (Amazing Edition)")
   love.window.setMode(960, 640)
   love.graphics.setBackgroundColor(0, 0.7, 0.2, 1)
   
