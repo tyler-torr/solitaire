@@ -18,8 +18,8 @@ function love.load()
   pile = PileClass:new(300, 200)
   
   local card1 = CardClass:new("Hearts", "1", false, 0, 0)
-  local card2 = CardClass:new("Diamonds", "2", false, 0, 0)
-  local card3 = CardClass:new("Clubs", "3", false, 0, 0)
+  local card2 = CardClass:new("Diamonds", "12", false, 0, 0)
+  local card3 = CardClass:new("Clubs", "13", false, 0, 0)
   
   pile:addCard(card1)
   pile:addCard(card2)

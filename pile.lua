@@ -64,16 +64,11 @@ end
 
 function PileClass:draw()
   if #self.cards > 0 then
-    local topCard = self:peek()
-    topCard.position = self.position
-    topCard:draw()
-    
-    for i = 2, #self.cards do
+    for i = 1, #self.cards do
       local stackedCard = self.cards[i]
       stackedCard.position = Vector(self.position.x, self.position.y + i * pileOffset)
-      if stackedCard.visible then
-        stackedCard:draw()
-      end
+      stackedCard:draw()
     end
+    self:revealCard()
   end
 end
