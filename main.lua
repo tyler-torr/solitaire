@@ -13,7 +13,7 @@ function love.load()
   grabber = GrabberClass:new()
   cardTable = {}
   
-  table.insert(cardTable, CardClass:new(100, 100))
+  table.insert(cardTable, CardClass:new("Clubs", 2, true, 100, 100))
   
 end
 function love.update()
