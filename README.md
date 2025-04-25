@@ -1,4 +1,6 @@
 # solitaire
  Solitaire coded in lua.
 
-CURRENTLY NOT FINISHED. Will be finished soon with tangential work added intermittenly.
+Card sprites are from 'Free Playing Cards Pixelart Asset Pack', made by Elvgames.
+https://elvgames.itch.io/playing-cards-pixelart-asset-pack
+

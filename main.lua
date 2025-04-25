@@ -1,32 +1,45 @@
--- Tyler
--- CMPM 121 - Update
--- 4-7-2025
+-- Tyler Torrella
+-- CMPM 121 - Pickup
+-- 4-11-25
+io.stdout:setvbuf("no")
 
--- Code gotten from class, will elaborate on later.
-
-require "entity"
+require "card"
+require "grabber"
 
 function love.load()
-  screenWidth = 640
-  screenHeight = 480
-  love.window.setMode(screenWidth, screenHeight)
-  love.graphics.setBackgroundColor(0.2, 0.7, 0.2, 1)
+  love.window.setMode(960, 640)
+  love.graphics.setBackgroundColor(0, 0.7, 0.2, 1)
   
-  entityTable = {}
+  grabber = GrabberClass:new()
+  cardTable = {}
   
-  table.insert(entityTable, 
-   EntityClass:new(screenWidth/2, screenHeight/2, 50, 50) 
-  )
+  table.insert(cardTable, CardClass:new(100, 100))
+  
 end
-
 function love.update()
-  for _, entity in ipairs(entityTable) do
-    entity:update()
+  grabber:update()
+  
+  checkForMouseMoving()
+  
+  for _, card in ipairs(cardTable) do
+    card:update()
   end
 end
-
 function love.draw()
-  for _, entity in ipairs(entityTable) do
-    entity:draw()
+  for _, card in ipairs(cardTable) do
+    card:draw()
+  end
+  
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.print("Mouse: " .. tostring(grabber.currentMousePos.x) .. ", " .. tostring(grabber.currentMousePos.y))
+end
+
+function checkForMouseMoving()
+  if grabber.currentMousePos == nil then
+    return
+  end
+  
+  for _, card in ipairs(cardTable) do
+    card:checkForMouseOver(grabber)
   end
 end
