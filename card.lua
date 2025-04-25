@@ -37,9 +37,8 @@ function CardClass:draw()
 end
 
 function CardClass:checkForMouseOver()
-  if self.state == CARD_STATE.GRABBED then
-    return
-  end
+  if self.state == CARD_STATE.GRABBED then return end -- Can't grab a card if already holding one
+  if not self.visible then return end -- Can't grab a card if it's face down
   
   local isMouseOver = self:contains(grabber.currentMousePos)
   self.state = isMouseOver and CARD_STATE.MOUSE_OVER or CARD_STATE.IDLE

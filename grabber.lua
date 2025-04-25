@@ -21,11 +21,13 @@ end
 function GrabberClass:grab()
   print("GRAB - ")
   
+  print("Why don't you grab. I beg")
+  
   for _, card in ipairs(cardTable) do
     -- If mouse is hovering over a card and is currently holding nothing
     if card.state == CARD_STATE.MOUSE_OVER and self.heldObject == nil then
       self.heldObject = card
-      self.offset = grabber.currentMousePos - card.position
+      self.offset = self.currentMousePos - card.position
       card.state = CARD_STATE.GRABBED
       break
     end
@@ -33,11 +35,8 @@ function GrabberClass:grab()
 end
 
 function GrabberClass:release()
+  if self.heldObject == nil then return end -- Check if there's nothing to release
   print("RELEASE - ")
-  -- Check if there's nothing to release
-  if self.heldObject == nil then
-    return
-  end
   
   if self.heldObject then
     self.heldObject.state = CARD_STATE.IDLE
@@ -46,18 +45,18 @@ function GrabberClass:release()
   self.offset = nil
 end
 
-function GrabberClass:checkForMouseOver()
+function GrabberClass:checkForMouseOver(cardTable)
   if not self.visible then return end
   if grabber.heldObject ~= nil then return end
   
   local mouse = grabber.currentMousePos
-  if mouse.x > self.position.x and mouse.x < self.position.x + self.size.x and
-     mouse.y > self.position.y and mouse.y < self.position.y + self.size.y then
-     
-    if love.mouse.isDown(1) and grabber.grabPos == nil then
-      grabber.heldObject = self
-      grabber.grabPos = Vector(self.position.x, self.position.y)
-      self.state = CARD_STATE.GRABBED
+  for _, card in ipairs(cardTable) do
+    if card.state == CARD_STATE.IDLE or card.state == CARD_STATE.MOUSE_OVER then
+      if card:contains(mouse) then
+        card.state = CARD_STATE.MOUSE_OVER
+      else
+        card.state = CARD_STATE.IDLE
+      end
     end
   end
 end
@@ -67,9 +66,6 @@ function GrabberClass:update()
   self.currentMousePos = Vector(love.mouse.getX(), love.mouse.getY())
   
   if self.heldObject then
-    self.heldObject.position = Vector(
-      self.currentMousePos.x - self.heldObject.size.x / 2,
-      self.currentMousePos.y - self.heldObject.size.y / 2
-    )
+    self.heldObject.position = self.currentMousePos - self.offset
   end
 end
