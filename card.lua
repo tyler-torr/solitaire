@@ -41,13 +41,7 @@ function CardClass:checkForMouseOver()
     return
   end
   
-  local mousePos = grabber.currentMousePos
-  local isMouseOver = 
-    mousePos.x > self.position.x and 
-    mousePos.x < self.position.x + self.size.x and 
-    mousePos.y > self.position.y and 
-    mousePos.y < self.position.y + self.size.y
-  
+  local isMouseOver = self:contains(grabber.currentMousePos)
   self.state = isMouseOver and CARD_STATE.MOUSE_OVER or CARD_STATE.IDLE
 end
 
@@ -59,6 +53,11 @@ function CardClass:getColor()
   end
 end
 
+function CardClass:contains(point)
+  return point.x >= self.position.x and point.x <= self.position.x + self.size.x and
+         point.y >= self.position.y and point.y <= self.position.y + self.size.y
+end
+
 function CardClass:update()
-  
+
 end

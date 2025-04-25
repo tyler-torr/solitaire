@@ -1,5 +1,6 @@
 
 require "vector"
+require "card"
 
 GrabberClass = {}
 
@@ -8,53 +9,67 @@ function GrabberClass:new()
   local metadata = {__index = GrabberClass}
   setmetatable(grabber, metadata)
   
+  grabber.heldObject = nil
+  grabber.offset = nil
+  
   grabber.previousMousePos = nil
   grabber.currentMousePos = nil
-  
-  grabber.grabPos = nil
-  
-  grabber.heldObject = nil
   
   return grabber
 end
 
-function GrabberClass:update()
-  self.currentMousePos = Vector(
-    love.mouse.getX(),
-    love.mouse.getY()
-  )
-  
-  -- Click (just the first frame)
-  if love.mouse.isDown(1) and self.grabPos == nil then
-    self:grab()
-  end
-  -- Release
-  if not love.mouse.isDown(1) and self.grabPos ~= nil then
-    self:release()
-  end
-end
-
 function GrabberClass:grab()
-  self.grabPos = self.currentMousePos
-  print("GRAB - " .. tostring(self.grabPos))
+  print("GRAB - ")
+  
+  for _, card in ipairs(cardTable) do
+    -- If mouse is hovering over a card and is currently holding nothing
+    if card.state == CARD_STATE.MOUSE_OVER and self.heldObject == nil then
+      self.heldObject = card
+      self.offset = grabber.currentMousePos - card.position
+      card.state = CARD_STATE.GRABBED
+      break
+    end
+  end
 end
 
 function GrabberClass:release()
-  
   print("RELEASE - ")
-  if self.heldObject == nil then -- we have nothing to release
+  -- Check if there's nothing to release
+  if self.heldObject == nil then
     return
   end
   
-  -- TODO: eventually check if release position is invalid and if it is
-  -- return the heldObject to the grabPosition
-  local isValidReleasePosition = true -- *insert actual check instead of "true"*
-  if not isValidReleasePosition then
-    self.heldObject.position = self.grabPosition
+  if self.heldObject then
+    self.heldObject.state = CARD_STATE.IDLE
   end
-  
-  self.heldObject.state = 0 -- it's no longer grabbed
-  
   self.heldObject = nil
-  self.grabPos = nil
+  self.offset = nil
+end
+
+function GrabberClass:checkForMouseOver()
+  if not self.visible then return end
+  if grabber.heldObject ~= nil then return end
+  
+  local mouse = grabber.currentMousePos
+  if mouse.x > self.position.x and mouse.x < self.position.x + self.size.x and
+     mouse.y > self.position.y and mouse.y < self.position.y + self.size.y then
+     
+    if love.mouse.isDown(1) and grabber.grabPos == nil then
+      grabber.heldObject = self
+      grabber.grabPos = Vector(self.position.x, self.position.y)
+      self.state = CARD_STATE.GRABBED
+    end
+  end
+end
+
+function GrabberClass:update()
+  self.previousMousePos = self.currentMousePos
+  self.currentMousePos = Vector(love.mouse.getX(), love.mouse.getY())
+  
+  if self.heldObject then
+    self.heldObject.position = Vector(
+      self.currentMousePos.x - self.heldObject.size.x / 2,
+      self.currentMousePos.y - self.heldObject.size.y / 2
+    )
+  end
 end

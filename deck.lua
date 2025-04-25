@@ -26,6 +26,11 @@ function DeckClass:shuffle()
   -- Uhhhh come back to this later??
 end
 
+-- Add a card to a deck
+function DeckClass:addCard(card)
+  table.insert(self.cards, card)
+end
+
 -- Pop last card off of deck
 function DeckClass:draw()
   return table.remove(self.cards)
