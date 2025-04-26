@@ -17,6 +17,7 @@ function PileClass:new(xPos, yPos)
 end
 
 function PileClass:addCard(card)
+  card.position = Vector(self.x, self.y)
   table.insert(self.cards, card)
 end
 

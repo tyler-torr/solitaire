@@ -9,7 +9,6 @@ require "grabber"
 require "pile"
 
 local deck
-local tableau = {}
 
 local BACKGROUND_COLOR = {0, 0.7, 0.2, 1}
 local WHITE = {1, 1, 1, 1}
@@ -31,13 +30,16 @@ function love.load()
 
   -- Initialize tableau piles
   for i = 1, NUM_TABLEAU_PILES do
-    tableau[i] = PileClass:new(i * TABLEAU_DISTANCE, 200)
+    local pile = PileClass:new(i * TABLEAU_DISTANCE, 200)
+    -- Draw each card in tableau pile (1 card in pile 1, 2 cards in pile 2, etc)
     for j = 1, i do
       local card = deck:draw()
-      tableau[i]:addCard(card)
-      table.insert(cardTable, card)
+      pile:addCard(card)
     end
+    table.insert(cardTable, pile)
   end
+
+  
 end
 
 function love.update()
@@ -46,19 +48,17 @@ function love.update()
   checkForMouseMoving()
   grabber:checkForMouseOver(cardTable)
   
-  for _, card in ipairs(cardTable) do
-    card:update()
+  for _, pile in ipairs(cardTable) do
+    for _, card in ipairs(pile.cards) do
+      card:update()
+    end
   end
 end
 
 function love.draw()
   -- Draw the tableau piles
-  for _, pile in ipairs(tableau) do
+  for _, pile in ipairs(cardTable) do
     pile:draw()
-  end
-  
-  for _, card in ipairs(cardTable) do
-    card:draw()
   end
   
   if grabber.heldObject then
@@ -67,10 +67,6 @@ function love.draw()
   
   love.graphics.setColor(WHITE)
   love.graphics.print("Mouse: " .. tostring(grabber.currentMousePos.x) .. ", " .. tostring(grabber.currentMousePos.y))
-  
-  if grabber.heldObject then
-    love.graphics.print("Grabbed card: " .. grabber.heldObject.suit .. " " .. grabber.heldObject.rank, 10, 20)
-  end
 end
 
 function checkForMouseMoving()
@@ -78,7 +74,7 @@ function checkForMouseMoving()
     return
   end
   
-  for _, pile in ipairs(tableau) do
+  for _, pile in ipairs(cardTable) do
     for _, card in ipairs(pile.cards) do
       card:checkForMouseOver()
     end

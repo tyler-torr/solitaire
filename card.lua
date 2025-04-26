@@ -58,5 +58,7 @@ function CardClass:contains(point)
 end
 
 function CardClass:update()
-
+  if self.state == CARD_STATE.GRABBED then
+    self.position = grabber.currentMousePos - grabber.offset
+  end
 end
