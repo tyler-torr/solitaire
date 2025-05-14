@@ -1,27 +1,28 @@
 
-require "vector"
-require "card"
+require "pile"
+
 
 GrabberClass = {}
+
 
 function GrabberClass:new()
   local grabber = {}
   local metadata = {__index = GrabberClass}
   setmetatable(grabber, metadata)
   
-  grabber.heldObject = nil
+  grabber.cards = {}
+  grabber.originPile = nil
   grabber.offset = nil
   
-  grabber.previousMousePos = nil
+  --grabber.previousMousePos = nil
   grabber.currentMousePos = nil
-  
   grabber.grabPos = nil
   
   return grabber
 end
 
 function GrabberClass:update()
-  self.previousMousePos = self.currentMousePos
+  --self.previousMousePos = self.currentMousePos
   self.currentMousePos = Vector(
     love.mouse.getX(), 
     love.mouse.getY()
@@ -35,61 +36,65 @@ function GrabberClass:update()
   if not love.mouse.isDown(1) and self.grabPos ~= nil then
     self:release()
   end
-  if self.heldObject then
-    self.heldObject.position = self.currentMousePos - self.offset
+end
+
+function GrabberClass:draw()
+  for i, card in ipairs(self.cards) do
+    card.position = self.currentMousePos - self.offset + Vector(0, (i - 1) * PILE_OFFSET)
+    card:draw()
   end
 end
 
-function GrabberClass:grab()
-  for _, pile in ipairs(cardTable) do
-    for _, card in ipairs(pile.cards) do
-      if card.state == CARD_STATE.MOUSE_OVER then
-        self.heldObject = card
-        
-        if not card.position then
-          print("Card position is nil!")
-        end
-        
-        if not self.currentMousePos then
-          print("Error: currentMousePos is nil")
-        end
 
-        if card.position and self.currentMousePos then
-          self.offset = self.currentMousePos - card.position
-          card.state = CARD_STATE.GRABBED
-          print("GRAB - " .. tostring(self.heldObject.suit) .. " " .. tostring(self.heldObject.rank))
-          pile:removeCard(card)
-          break
-        end
-      end
-    end
+
+-- Grab a Card. If it's from a Pile, grab the entire Pile
+function GrabberClass:grab(card)
+  if not card then return end
+  if not card.grabbable then return end  -- No need to check if the card isn't grabbable (i.e. not top card of Talon)
+  
+  print("Grabbing card: " .. card.suit .. " " .. card.rank)
+  local pile, index = getPileFrom(card)
+  if not pile then return end
+
+  self.cards = {}
+  for i = index, #pile.cards do
+    table.insert(self.cards, pile.cards[i])
   end
+
+  for i = #pile.cards, index, -1 do
+    table.remove(pile.cards, i)
+  end
+
+  self.originPile = pile
+  self.grabPos = self.currentMousePos
+  self.offset = self.currentMousePos - card.position
+
+  print("GRABBED " .. tostring(#self.cards) .. " cards")
 end
 
 function GrabberClass:release()
-  if self.heldObject == nil then return end
-  
-  print("RELEASE - " .. tostring(self.heldObject.suit) .. " " .. tostring(self.heldObject.rank))
-  
-  self.heldObject.state = CARD_STATE.IDLE
-  self.heldObject = nil
-  self.offset = nil
-end
+  if #self.cards == 0 then return end
 
-function GrabberClass:checkForMouseOver(cardTable)
-  if not self.visible then return end
-  if self.heldObject ~= nil then return end
-  
-  local mouse = self.currentMousePos
+  local grabbedCard = self.cards[1]
+
   for _, pile in ipairs(cardTable) do
-    for _, card in ipairs(pile.cards) do
-      if card.state == CARD_STATE.IDLE or card.state == CARD_STATE.MOUSE_OVER then
-        if card:contains(mouse) then
-          card.state = CARD_STATE.MOUSE_OVER
-        else
-          card.state = CARD_STATE.IDLE
-        end
+    if contains(pile, self.currentMousePos) and pile:isLegalAction(grabbedCard) then
+      for _, card in ipairs(self.cards) do
+        pile:addCard(card)
       end
+      self.originPile:revealCard()
+      self.cards = {}
+      self.originPile = nil
+      print("RELEASED to " .. pile.pileType .. " pile")
+      return
     end
   end
+  
+  -- Return to original pile if placed in an incorrect spot
+  print("RELEASED to original pile")
+  for _, card in ipairs(self.cards) do
+    self.originPile:addCard(card)
+  end
+  self.cards = {}
+  self.originPile = nil
 end

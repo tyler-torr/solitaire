@@ -1,54 +1,114 @@
 
+require "card"
+
 PileClass = {}
 
-pileOffset = 10 -- Distance between each card on a pile
+PILE_TYPE = {
+  TABLEAU = 0,
+  FOUNDATION = 1,
+  TALON = 2
+}
 
 -- Create a pile of cards 
-function PileClass:new(xPos, yPos)
+function PileClass:new(xPos, yPos, pileType)
   local pile = {}
   local metadata = {__index = PileClass}
   setmetatable(pile, metadata)
   
+  pile.pileType = pileType
+  
   pile.cards = {}
   pile.position = Vector(xPos, yPos)
-  pile.size = Vector(50, 70)
+  pile.size = Vector(CARD_WIDTH, CARD_HEIGHT)
   
   return pile
 end
 
-function PileClass:addCard(card)
-  card.position = Vector(self.x, self.y)
-  table.insert(self.cards, card)
-end
-
-function PileClass:removeCard(card)
-  return table.remove(self.cards)
-end
-
--- Discover the topmost card in the pile
-function PileClass:peek()
-  return self.cards[#self.cards]
-end
-
-function PileClass:isLegal(card)
-  local topCard = self:peek()
-  
-  if topCard then
-    -- Check if card's color is different from the top card's color,
-    -- and that the value is exactly one lower than the top card's value
-    if (card:getColor() ~= topCard:getColor() and card.value == topCard.value - 1) then
-      return true
-    end
-  
-  -- If there are no cards, a King can be placed in the pile
-  elseif #self.cards == 0 then
-    if card.rank == "13" then
-      return true
+function PileClass:update()
+  if self.pileType == PILE_TYPE.TALON then
+    for i, card in ipairs(self.cards) do
+      card.grabbable = (i == #self.cards)  -- Only top card grabbable in the Falcon
     end
   end
-  
-  -- Otherwise, this isn't a legal pile
-  return false
+end
+
+function PileClass:draw()
+  -- Draw background for Foundation Piles
+  if self.pileType == PILE_TYPE.FOUNDATION or self.pileType == PILE_TYPE.FALCON then
+    love.graphics.setColor(TRANSPARENT_GRAY)
+    love.graphics.rectangle("fill", self.position.x, self.position.y, self.size.x, self.size.y)
+    love.graphics.setColor(WHITE)
+  end
+
+  if #self.cards > 0 then
+    if self.pileType == PILE_TYPE.TABLEAU or self.pileType == PILE_TYPE.FALCON then
+      local maxDrawn
+      if self.pileType == PILE_TYPE.TABLEAU then
+        maxDrawn = #self.cards
+      else
+        maxDrawn = math.min(3, #self.cards)
+      end
+
+      for i = 1, maxDrawn do
+        local stackedCard = self.cards[i]
+        if stackedCard.state ~= CARD_STATE.GRABBED then
+          stackedCard.position = Vector(self.position.x, self.position.y + (i - 1) * PILE_OFFSET)
+          stackedCard:draw()
+        end
+      end
+
+      if self ~= grabber.originPile then
+        self:revealCard()
+      end
+
+    elseif self.pileType == PILE_TYPE.FOUNDATION then
+      -- Only draw the top card at base position for Foundation
+      local topCard = self:peek()
+      if topCard and topCard.state ~= CARD_STATE.GRABBED then
+        topCard.position = Vector(self.position.x - 7, self.position.y - 13)
+        topCard:draw()
+      end
+    end
+  end
+end
+
+
+
+
+-- === Helper Functions for Piles ===
+
+-- Add Card to a Pile
+function PileClass:addCard(card)
+  card.position = Vector(self.position.x, self.position.y)
+  if self.pileType ~= PILE_TYPE.FOUNDATION then -- Unless a Pile is a Foundation Pile, Piles have offset when overlayed
+    card.position.y = self.position.y + (#self.cards * PILE_OFFSET)
+  end
+  table.insert(self.cards, card)
+  self:updateSize()
+end
+
+-- Remove Card from a Pile
+function PileClass:removeCard(card)
+  for i, c in ipairs(self.cards) do
+    if c == card then
+      self:updateSize()
+      return table.remove(self.cards, i)
+    end
+  end
+  self:updateSize()
+  return nil
+end
+
+-- Clear cards in a Pile
+function PileClass:clear()
+  self.cards = {}
+  self:updateSize()
+end
+
+
+-- Discover the topmost Card in a Pile
+function PileClass:peek()
+  return self.cards[#self.cards]
 end
 
 -- Every pile's top card should always be visible
@@ -59,17 +119,66 @@ function PileClass:revealCard()
   end
 end
 
-function PileClass:clear()
-  self.cards = {}
+-- Update a Pile's size to correctly reflect its visible size on the board
+function PileClass:updateSize()
+  if self.pileType == PILE_TYPE.TABLEAU then
+    local height = CARD_HEIGHT + (PILE_OFFSET * #self.cards)
+    self.size = Vector(CARD_WIDTH, height)
+  end
+  if self.pileType == PILE_TYPE.FALCON then
+    local height = CARD_HEIGHT + (PILE_OFFSET * math.min(3, #self.cards))
+    self.size = Vector(CARD_WIDTH, height)
+  end
 end
 
-function PileClass:draw()
-  if #self.cards > 0 then
-    for i = 1, #self.cards do
-      local stackedCard = self.cards[i]
-      stackedCard.position = Vector(self.position.x, self.position.y + i * pileOffset)
-      stackedCard:draw()
-    end
-    self:revealCard()
+
+-- === Check if Pile action is legal ===
+
+
+-- If trying to add Card to Pile, check whether it's a legal action to permit it
+function PileClass:isLegalAction(card)
+  if self.pileType == PILE_TYPE.TABLEAU then
+    return self:isLegalTableau(card)
+  elseif self.pileType == PILE_TYPE.FOUNDATION then
+    return self:isLegalFoundation(card)
+  elseif self.pileType == PILE_TYPE.FALCON then -- Cannot add Cards to Falcon Pile
+    return false
   end
+  return false
+end
+
+-- Check if placing a Card onto a Tableau Pile is legal
+function PileClass:isLegalTableau(card)
+  if self.pileType ~= PILE_TYPE.TABLEAU then return false end -- Only checking Tableau logic
+  
+  if #self.cards == 0 then -- Only Kings can be placed in empty Tableau Piles
+    return card.rank == 13
+  else -- Card must be (1) opposite suit color and (2) exactly one value below top card's rank
+    local topCard = self:peek()
+    local isColorValid = card:getColor() ~= topCard:getColor()
+    local isRankValid = card.rank == topCard.rank - 1
+    
+    return isColorValid and isRankValid
+  end
+end
+
+-- Check if placing a Card onto a Foundation Pile is legal
+function PileClass:isLegalFoundation(card)
+  if self.pileType ~= PILE_TYPE.FOUNDATION then return false end
+  if not card then end
+  if card.pile and card.pile:peek() ~= card then return false end  -- Don't accept piles
+  
+  if #self.cards == 0 then -- Only Aces can be placed in empty Foundation Piles
+    local isAce = (tonumber(card.rank) == 1)
+    return isAce
+  else -- Card must be (1) same suit color and (2) exactly one value above top card's rank
+    local topCard = self:peek()
+    local isCorrectSuit = card.suit == topCard.suit
+    local isNextRank = tonumber(card.rank) == tonumber(topCard.rank) + 1
+    return isCorrectSuit and isNextRank
+  end
+end
+
+function PileClass:checkForMouseOver(mousePos)
+  return contains(self, mousePos)
 end

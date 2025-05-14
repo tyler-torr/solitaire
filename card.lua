@@ -1,5 +1,8 @@
 
+require "utils"
 require "vector"
+require "constants"
+
 
 CardClass = {}
 
@@ -9,6 +12,7 @@ CARD_STATE = {
   GRABBED = 2
 }
 
+
 function CardClass:new(suit, rank, visible, xPos, yPos)
   local imagePath = "cards/" .. suit .. " " .. tostring(rank) .. ".png"
   
@@ -16,16 +20,23 @@ function CardClass:new(suit, rank, visible, xPos, yPos)
   local metadata = {__index = CardClass}
   setmetatable(card, metadata)
   
-  card.suit = suit
-  card.rank = rank
-  card.visible = visible or false
   card.position = Vector(xPos, yPos)
-  card.size = Vector(50, 70)
+  card.size = Vector(CARD_WIDTH, CARD_HEIGHT)
   card.state = CARD_STATE.IDLE
+  card.mouseOver = false
+  card.grabbable = true
+  
+  card.suit = suit
+  card.rank = tonumber(rank)
+  card.visible = visible or false
   
   card.image = love.graphics.newImage(imagePath)
   card.imageBack = love.graphics.newImage("cards/Card Back.png")
   return card
+end
+
+function CardClass:update()
+  
 end
 
 function CardClass:draw()
@@ -36,29 +47,25 @@ function CardClass:draw()
   end
 end
 
-function CardClass:checkForMouseOver()
+
+
+-- Check whether the mouse is hovering over a Card. If it is, change its state to be recognized as a potential grabbable candidate
+function CardClass:checkForMouseOver(mousePos)
   if self.state == CARD_STATE.GRABBED then return end -- Can't grab a card if already holding one
   if not self.visible then return end -- Can't grab a card if it's face down
   
-  local isMouseOver = self:contains(grabber.currentMousePos)
+  local isMouseOver = contains(self, mousePos)
   self.state = isMouseOver and CARD_STATE.MOUSE_OVER or CARD_STATE.IDLE
 end
 
+-- Return red or black
 function CardClass:getColor()
   if (self.suit == "Hearts" or self.suit == "Diamonds") then
     return "red"
-  else
+  elseif (self.suit == "Clubs" or self.suit == "Spades") then
     return "black"
-  end
-end
-
-function CardClass:contains(point)
-  return point.x >= self.position.x and point.x <= self.position.x + self.size.x and
-         point.y >= self.position.y and point.y <= self.position.y + self.size.y
-end
-
-function CardClass:update()
-  if self.state == CARD_STATE.GRABBED then
-    self.position = grabber.currentMousePos - grabber.offset
+  else -- How would this happen??
+    print("ERROR: Unknown suit: " .. tostring(self.suit))
+    return "ERROR"
   end
 end
