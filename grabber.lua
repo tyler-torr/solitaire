@@ -52,7 +52,6 @@ function GrabberClass:grab(card)
   if not card then return end
   if not card.grabbable then return end  -- No need to check if the card isn't grabbable (i.e. not top card of Talon)
   
-  print("Grabbing card: " .. card.suit .. " " .. card.rank)
   local pile, index = getPileFrom(card)
   if not pile then return end
 
@@ -68,8 +67,6 @@ function GrabberClass:grab(card)
   self.originPile = pile
   self.grabPos = self.currentMousePos
   self.offset = self.currentMousePos - card.position
-
-  print("GRABBED " .. tostring(#self.cards) .. " cards")
 end
 
 function GrabberClass:release()
@@ -85,13 +82,11 @@ function GrabberClass:release()
       self.originPile:revealCard()
       self.cards = {}
       self.originPile = nil
-      print("RELEASED to " .. pile.pileType .. " pile")
       return
     end
   end
   
   -- Return to original pile if placed in an incorrect spot
-  print("RELEASED to original pile")
   for _, card in ipairs(self.cards) do
     self.originPile:addCard(card)
   end

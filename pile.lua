@@ -27,29 +27,26 @@ end
 function PileClass:update()
   if self.pileType == PILE_TYPE.TALON then
     for i, card in ipairs(self.cards) do
-      card.grabbable = (i == #self.cards)  -- Only top card grabbable in the Falcon
+      if i == #self.cards then  -- Only top card grabbable in the Talon
+        card.grabbable = true
+      else
+        card.grabbable = false
+      end
     end
   end
 end
 
 function PileClass:draw()
   -- Draw background for Foundation Piles
-  if self.pileType == PILE_TYPE.FOUNDATION or self.pileType == PILE_TYPE.FALCON then
+  if self.pileType == PILE_TYPE.FOUNDATION then
     love.graphics.setColor(TRANSPARENT_GRAY)
     love.graphics.rectangle("fill", self.position.x, self.position.y, self.size.x, self.size.y)
     love.graphics.setColor(WHITE)
   end
 
   if #self.cards > 0 then
-    if self.pileType == PILE_TYPE.TABLEAU or self.pileType == PILE_TYPE.FALCON then
-      local maxDrawn
-      if self.pileType == PILE_TYPE.TABLEAU then
-        maxDrawn = #self.cards
-      else
-        maxDrawn = math.min(3, #self.cards)
-      end
-
-      for i = 1, maxDrawn do
+    if self.pileType == PILE_TYPE.TABLEAU or self.pileType == PILE_TYPE.TALON then
+      for i = 1, #self.cards do
         local stackedCard = self.cards[i]
         if stackedCard.state ~= CARD_STATE.GRABBED then
           stackedCard.position = Vector(self.position.x, self.position.y + (i - 1) * PILE_OFFSET)
@@ -125,7 +122,7 @@ function PileClass:updateSize()
     local height = CARD_HEIGHT + (PILE_OFFSET * #self.cards)
     self.size = Vector(CARD_WIDTH, height)
   end
-  if self.pileType == PILE_TYPE.FALCON then
+  if self.pileType == PILE_TYPE.TALON then
     local height = CARD_HEIGHT + (PILE_OFFSET * math.min(3, #self.cards))
     self.size = Vector(CARD_WIDTH, height)
   end
@@ -141,7 +138,7 @@ function PileClass:isLegalAction(card)
     return self:isLegalTableau(card)
   elseif self.pileType == PILE_TYPE.FOUNDATION then
     return self:isLegalFoundation(card)
-  elseif self.pileType == PILE_TYPE.FALCON then -- Cannot add Cards to Falcon Pile
+  elseif self.pileType == PILE_TYPE.TALON then -- Cannot add Cards to Talon Pile
     return false
   end
   return false
@@ -180,5 +177,8 @@ function PileClass:isLegalFoundation(card)
 end
 
 function PileClass:checkForMouseOver(mousePos)
-  return contains(self, mousePos)
+  if #self.cards == 0 then return contains(self, mousePos) end
+  local topCard = self:peek()
+  if topCard then return contains(topCard, mousePos) end
+  return false
 end

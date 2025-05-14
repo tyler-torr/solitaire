@@ -36,6 +36,7 @@ function DeckClass:draw()
   if #self.cards > 0 then
     love.graphics.draw(self.cards[#self.cards].imageBack, self.position.x, self.position.y)
   end
+  self.talon:draw()
 end
 
 
@@ -52,11 +53,12 @@ end
 
 -- When clicking the Deck, draw Cards to add to the Talon. If there are no more Cards, recycle instead
 function DeckClass:click()
-  print("Yippee!")
   if #self.cards > 0 then
     self:drawCardsToTalon(3)  -- Recycle the talon if the deck is empty
+    sfx_draw:play()
   else
     self:recycle()  -- Draw 3 cards from the deck to the talon
+    sfx_shuffle:play()
   end
 end
 
@@ -82,6 +84,5 @@ function DeckClass:recycle()
 end
 
 function DeckClass:checkForMouseOver(mousePos)
-  print("Tada!")
   return contains(self, mousePos)
 end

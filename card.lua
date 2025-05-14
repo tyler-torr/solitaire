@@ -65,7 +65,6 @@ function CardClass:getColor()
   elseif (self.suit == "Clubs" or self.suit == "Spades") then
     return "black"
   else -- How would this happen??
-    print("ERROR: Unknown suit: " .. tostring(self.suit))
     return "ERROR"
   end
 end

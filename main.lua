@@ -14,11 +14,20 @@ local NUM_TABLEAU_PILES = 7
 local NUM_FOUNDATION_PILES = 4
 local FOUNDATION_DISTANCE = 80
 
+local resetButton = {
+    position = Vector(400, 400),
+    size = Vector(100, 40),
+    width = 100,
+    height = 40,
+    label = "Reset"
+  }
+
 function love.load()
   love.window.setTitle("Super Epic & Awesome Solitaire (Amazing Edition)")
   love.window.setMode(SCREEN_WIDTH, SCREEN_HEIGHT)
   love.graphics.setBackgroundColor(LIGHT_GREEN)
   
+
   win = false
   
   grabber = GrabberClass:new()
@@ -44,33 +53,19 @@ function love.load()
   for i = 1, NUM_FOUNDATION_PILES do
     local foundation = PileClass:new(BOARD_X + 450, BOARD_Y + (i - 1) * FOUNDATION_DISTANCE, PILE_TYPE.FOUNDATION)
     table.insert(cardTable, foundation)
-    print("Foundation pile " .. i .. " created at position: (" .. (BOARD_X + 450) .. ", " .. (BOARD_Y + (i - 1) * FOUNDATION_DISTANCE) .. ")")
   end
   
   -- Initialize Foundation piles
-  falcon = PileClass:new(BOARD_X - 20, BOARD_Y + 13 + 100)
-  table.insert(cardTable, falcon)
+  talon = PileClass:new(BOARD_X - 20, BOARD_Y + 13 + 100)
+  table.insert(cardTable, talon)
 end
 
 function love.update()
   local mousePos = Vector(love.mouse.getX(), love.mouse.getY())
   
+  deck.talon:update()
   grabber:update()
   checkForMouseMoving()
-
-  for _, pile in ipairs(cardTable) do
-    if pile.pileType == PILE_TYPE.FOUNDATION then
-      -- Print foundation pile and top card
-      if contains(pile, mousePos) then
-        local topCard = pile:peek()  -- Get the top card in the pile
-
-        -- If the mouse is over a foundation pile, check if a card can be placed
-        local card = grabber.cards[1]
-        if card and pile:isLegalFoundation(card) then
-        end
-      end
-    end
-  end
 end
 
 function love.draw()
@@ -83,13 +78,22 @@ function love.draw()
   if #deck.cards > 0 then
     deck:draw()
   end
-  deck.talon:draw()
   
   -- Draw any cards grabbed
   grabber:draw()
   
-  love.graphics.setColor(WHITE)
-  love.graphics.print("Mouse: " .. tostring(grabber.currentMousePos.x) .. ", " .. tostring(grabber.currentMousePos.y))
+  if win == true then
+    love.graphics.setColor(WHITE)
+    love.graphics.print("YOU WON!!!!")
+    sfx_reset:play()
+  end
+  
+  -- Nearing end of project time so this is a bit rushed.
+  love.graphics.setColor(0.2, 0.2, 0.2, 0.9)
+  love.graphics.rectangle("fill", resetButton.position.x, resetButton.position.y, resetButton.width, resetButton.height, 8, 8)
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.printf(resetButton.label, resetButton.position.x, resetButton.position.y + 10, resetButton.width, "center")
 end
 
 
@@ -144,9 +148,15 @@ function love.mousepressed(x, y, button)
       end
     end
 
-    -- Finally, check if the click is on the deck (if it's not on the talon itself)
+    -- Check if the click is on the Deck
     if deck:checkForMouseOver(mousePos) then
       deck:click()
+    end
+    
+    -- Check if the click is on the reset button
+    if contains(resetButton, mousePos) then
+      sfx_reset:play()
+      love.load()
     end
   end
 end
